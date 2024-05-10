@@ -37,8 +37,9 @@ function sendCoord(position) {
 
 function response(data) {
     if (data.error == 'False') {
-        var snd = new Audio("data:audio/mpeg;base64," + data.audio);
-        snd.play();
+        var audioElement = document.getElementById('audioSource');
+        audioElement.src = "data:audio/mpeg;base64," + data.audio;
+        document.getElementById('audio').load();
     }
     else {
         alert('Error: ' + data.error_message);
