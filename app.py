@@ -7,10 +7,15 @@ import requests
 
 app = Flask(__name__, static_url_path='/static')
 CORS(app, resources={r"/*": {"origins": "*"}})
+global sunset, sunrise, last_update
+sunrise = datetime.strptime("06:00:00", "%H:%M:%S").time()
+sunset = datetime.strptime("20:00:00", "%H:%M:%S").time()
+last_update = datetime.strptime("00:00:00", "%H:%M:%S").date()
 
 
 @app.route('/')
-def hello_world():  # put application's code here
+def index():  # put application's code here
+    update_sun_times()
     return render_template('index.html')
 
 
@@ -57,18 +62,29 @@ def get_location():
 
 
 def check_time():
-    response = requests.get('https://worldtimeapi.org/api/ip')
-    time = response.json()['datetime'].split("T")[1].split("+")[0].split(".")[0]
-    time = datetime.strptime(time, "%H:%M:%S")
+    update_sun_times()
+    global sunrise, sunset
+    time = datetime.now().time().replace(microsecond=0)
 
-    response = requests.get('https://api.sunrisesunset.io/json?lat=45.00000&lng=007.00000')
-    sunrise = response.json()['results']['sunrise']
-    sunrise = datetime.strptime(sunrise, "%I:%M:%S %p")
-    sunset = response.json()['results']['sunset']
-    sunset = datetime.strptime(sunset, "%I:%M:%S %p")
-    #americani del cazzo, ma vi pare che sunset possa essere AM?
+    print(f"Time: {time}, Sunrise: {sunrise}, Sunset: {sunset}")
+    print()
 
-    return time > sunset or time < sunrise
+    #return time > sunset or time < sunrise
+    return True #testing
+
+def update_sun_times():
+    global sunrise, sunset, last_update
+    today = datetime.now().date()
+    if today > last_update:
+        response = requests.get('https://api.sunrisesunset.io/json?lat=45.00000&lng=007.00000')
+        sunrise = response.json()['results']['sunrise']
+        sunrise = datetime.strptime(sunrise, "%I:%M:%S %p").time()
+        sunset = response.json()['results']['sunset']
+        sunset = datetime.strptime(sunset, "%I:%M:%S %p").time()
+        # americani del cazzo, ma vi pare che sunset possa essere AM?
+        sunset = sunset.replace(hour=sunset.hour + 1)
+        # un'ora dopo il tramonto, deve essere buio
+        last_update = today
 
 def check_coordinates(user_coord):
     wp1 = ( 0, 0)
