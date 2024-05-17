@@ -88,12 +88,16 @@ def update_sun_times():
 
 def check_coordinates(user_coord):
     wp1 = ( 0, 0)
-
-
-
     return True, "example_long"
+
+
+@app.route('/audio/<audioID>', methods=['GET'])
+def download_audio():
+    return render_template('index.html')
+
+
 
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host="0.0.0.0", port=5000, ssl_context='adhoc')

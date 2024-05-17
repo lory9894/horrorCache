@@ -25,7 +25,7 @@ function getPosition() {
 function sendCoord(position) {
     let positionData = position.coords;
     $.ajax({
-        url: 'http://localhost:5000/location',
+        url: '/location',
         type: 'GET',
         data: {
             lat: positionData.latitude,
@@ -40,6 +40,7 @@ function response(data) {
         var audioElement = document.getElementById('audioSource');
         audioElement.src = "data:audio/mpeg;base64," + data.audio;
         document.getElementById('audio').load();
+        document.getElementById('audio').hidden = false;
     }
     else {
         alert('Error: ' + data.error_message);
