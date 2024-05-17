@@ -7,6 +7,9 @@ const options = {
 window.onload = function() {
     let promises = [];
     $('#btn').click(function() {
+        var alt_audio = document.getElementById('alt_audio');
+        alt_audio.innerText = "ricerco trasmissioni"
+        alt_audio.hidden = false;
         let promises = [];
         promises.push(getPosition());
         Promise.all(promises).then(function(values) {
@@ -36,13 +39,19 @@ function sendCoord(position) {
 }
 
 function response(data) {
-    if (data.error == 'False') {
+    var alt_audio = document.getElementById('alt_audio');
+    if (data.error === 'False') {
         var audioElement = document.getElementById('audioSource');
         audioElement.src = "data:audio/mpeg;base64," + data.audio;
+        alt_audio.hidden = true;
         document.getElementById('audio').load();
         document.getElementById('audio').hidden = false;
     }
     else {
-        alert('Error: ' + data.error_message);
+        if (data.error_message === 'time') {
+            alt_audio.innerText = "non è ancora buio"
+        } else if (data.error_message === 'location') {
+            alt_audio.innerText = "nessuna trasmissione trovata nelle vicinanze"
+        }
     }
 }

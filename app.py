@@ -1,12 +1,13 @@
 import base64
+import os
 from datetime import datetime
-
-from flask import Flask, request, g, render_template, url_for
+from flask import Flask, request, render_template, session
 from flask_cors import CORS
 import requests
 
 app = Flask(__name__, static_url_path='/static')
 CORS(app, resources={r"/*": {"origins": "*"}})
+
 global sunset, sunrise, last_update
 sunrise = datetime.strptime("06:00:00", "%H:%M:%S").time()
 sunset = datetime.strptime("20:00:00", "%H:%M:%S").time()
@@ -23,7 +24,7 @@ def get_audio(audio_id):
     audio = ""
     with app.open_resource(f"static/audio/{audio_id}.mp3", "rb") as file:
         audio = base64.b64encode(file.read())
-    return str(audio)[2:-1] # remove b' and '
+    return str(audio)[2:-1]  # remove b' and '
 
 
 @app.route('/location', methods=['POST', 'GET'])
@@ -39,24 +40,29 @@ def get_location():
 
     if check_time() is False:
         response['error'] = 'True'
-        response['error_message'] = 'not the right time'
+        response['error_message'] = 'time'
         response['audio'] = None
         return response
 
-    are_coords_ok,audio_id  = check_coordinates((lat, long))
+    are_coords_ok, audio_id = check_coordinates((float(lat), float(long)))
 
     if are_coords_ok is False:
         response['error'] = 'True'
-        response['error_message'] = 'not the right place'
+        response['error_message'] = 'location'
         response['audio'] = None
         return response
 
     response['error'] = 'False'
     response['error_message'] = ''
 
-
     response['audio'] = get_audio(audio_id)
 
+    '''token implementation
+    token = os.urandom(24).hex()
+    session[response['audio']] = token
+    response['token'] = token
+    print(f"Token: {token}")
+    '''
 
     return response
 
@@ -70,7 +76,8 @@ def check_time():
     print()
 
     #return time > sunset or time < sunrise
-    return True #testing
+    return True  #testing
+
 
 def update_sun_times():
     global sunrise, sunset, last_update
@@ -86,17 +93,29 @@ def update_sun_times():
         # un'ora dopo il tramonto, deve essere buio
         last_update = today
 
+
 def check_coordinates(user_coord):
-    wp1 = ( 0, 0)
-    return True, "example_long"
+    waypoints = [(45.0806526, 7.5117741), (45.0806526, 7.5117741)]
+
+    for i in range(len(waypoints)):
+        if check_distance(user_coord, waypoints[i]):
+            return True, f"audio_{i+1}"
 
 
+    return False, "audio_error"
+
+
+def check_distance(user_coord, wp_coord):
+    max_distance = 0.0005
+    distance = (user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2
+    return distance < max_distance
+
+'''token implementation
 @app.route('/audio/<audioID>', methods=['GET'])
 def download_audio():
-    return render_template('index.html')
-
-
-
+    token = request.args.get('token')
+    print(f"Token: {token}")
+'''
 
 
 if __name__ == '__main__':
