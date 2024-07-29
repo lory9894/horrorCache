@@ -45,20 +45,28 @@ def get_location():
         response['error'] = 'True'
         response['error_message'] = 'time'
         response['audio'] = None
+        response['coord'] = None
         return response
 
-    are_coords_ok, audio_id = check_coordinates((float(lat), float(long)))
+    are_coords_ok, audio, id_or_coord = check_coordinates((float(lat), float(long)))
 
     if are_coords_ok is False:
         response['error'] = 'True'
         response['error_message'] = 'location'
         response['audio'] = None
+        response['coord'] = None
         return response
 
+    #not error
     response['error'] = 'False'
     response['error_message'] = ''
 
-    response['audio'] = get_audio(audio_id)
+    if audio is False:
+        response['audio'] = None
+        response['coord'] = id_or_coord
+
+
+    response['audio'] = get_audio(id_or_coord)
 
     '''token implementation
     token = os.urandom(24).hex()
@@ -101,15 +109,24 @@ def check_coordinates(user_coord):
     waypoints = [(45.0806526, 7.5117741), (45.0806526, 7.5117741)]
 
     for i in range(len(waypoints)):
-        if check_distance(user_coord, waypoints[i]):
-            return True, f"audio_{i+1}"
+        if check_distance_audio(user_coord, waypoints[i]):
+            return True, True, f"audio_{i+1}"
+
+    for i in range(len(waypoints)):
+        if check_distance_coord(user_coord, waypoints[i]):
+            return True, False, waypoints[i]
 
 
-    return False, "audio_error"
+    return False, False, "audio_error"
 
 
-def check_distance(user_coord, wp_coord):
-    max_distance = 0.0005
+def check_distance_audio(user_coord, wp_coord):
+    max_distance = 0.0005 # 5m credo
+    distance = (user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2
+    return distance < max_distance
+
+def check_distance_coord(user_coord, wp_coord):
+    max_distance = 0.01 #100m credo
     distance = (user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2
     return distance < max_distance
 
