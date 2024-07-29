@@ -4,7 +4,7 @@ const options = {
   maximumAge: 0
 };
 
-const targetCoordinates = { lat: 40.95337 , lon: 9.56702 }; // Target coordinates todo:esempio
+let targetCoordinates = { lat: 40.95337 , lon: 9.56702 }; // Target coordinates todo:esempio
 
 
 window.onload = function() {
@@ -14,14 +14,10 @@ window.onload = function() {
         alt_audio.innerText = "ricerco trasmissioni"
         alt_audio.hidden = false;
         let promises = [];
-        updateSignalAndDirection();
         promises.push(getPosition());
         Promise.all(promises).then(function(values) {
             sendCoord(values[0]);
         });
-        setInterval(updateSignalAndDirection, 5000);
-
-
     });
 }
 
@@ -58,11 +54,15 @@ function response(data) {
             alt_audio.innerText = "non è ancora buio"
         } else if (data.error_message === 'location') {
             alt_audio.innerText = "nessuna trasmissione trovata nelle vicinanze"
+        } else if (data.error_message === 'generic'){
+            alt_audio.innerText = "trasmissione individuata, avvicinarsi"
+            setInterval(updateSignalAndDirection, 5000);
+            updateSignalAndDirection()
+            targetCoordinates = { lat: data.coords[0], lon: data.coords[1]}
         }
     }
 }
 
-// Function to calculate distance using  formula
 function calculateDistance(currentCoords, targetCoords) {
     return Math.sqrt(Math.pow(currentCoords.lat - targetCoords.lat, 2) + Math.pow(currentCoords.lon - targetCoords.lon, 2));
     //Haversine? nah, pitagora, siamo terrapiattisti qui.
@@ -96,6 +96,14 @@ function updateSignalAndDirection() {
 
             updateSignalStrength(distance);
             updateDirectionIndicator(angle);
+
+            /** todo: questo codice causa un loop, bisogna creare una funzione sendCoord con una response differente, che non triggeri il loop
+            let promises = [];
+            promises.push(getPosition());
+            Promise.all(promises).then(function(values) {
+                sendCoord(values[0]);
+            });
+                **/
 
     });
 

@@ -1,4 +1,5 @@
 import base64
+import math
 import os
 from datetime import datetime
 from flask import Flask, request, render_template, session
@@ -48,23 +49,22 @@ def get_location():
         response['coord'] = None
         return response
 
-    are_coords_ok, audio, id_or_coord = check_coordinates((float(lat), float(long)))
+    are_coords_ok, are_coords_near, id_or_coord = check_coordinates((float(lat), float(long)))
 
     if are_coords_ok is False:
         response['error'] = 'True'
-        response['error_message'] = 'location'
         response['audio'] = None
-        response['coord'] = None
+        if are_coords_near:
+            response['error_message'] = 'generic'
+            response['coords'] = id_or_coord
+        else:
+            response['error_message'] = 'location'
+            response['coords'] = None
         return response
 
     #not error
     response['error'] = 'False'
     response['error_message'] = ''
-
-    if audio is False:
-        response['audio'] = None
-        response['coord'] = id_or_coord
-
 
     response['audio'] = get_audio(id_or_coord)
 
@@ -106,7 +106,7 @@ def update_sun_times():
 
 
 def check_coordinates(user_coord):
-    waypoints = [(45.0806526, 7.5117741), (45.0806526, 7.5117741)]
+    waypoints = [(40.95337 , 9.56702), (45.0806526, 7.5117741), (45.0806526, 7.5117741)]
 
     for i in range(len(waypoints)):
         if check_distance_audio(user_coord, waypoints[i]):
@@ -114,20 +114,22 @@ def check_coordinates(user_coord):
 
     for i in range(len(waypoints)):
         if check_distance_coord(user_coord, waypoints[i]):
-            return True, False, waypoints[i]
+            return False, True, waypoints[i]
 
 
     return False, False, "audio_error"
 
 
 def check_distance_audio(user_coord, wp_coord):
-    max_distance = 0.0005 # 5m credo
-    distance = (user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2
+    max_distance = 0.00005 # 5m
+    distance = math.sqrt((user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2)
+    print(distance)
     return distance < max_distance
 
 def check_distance_coord(user_coord, wp_coord):
-    max_distance = 0.01 #100m credo
-    distance = (user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2
+    max_distance = 0.001 #100m
+    distance = math.sqrt((user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2)
+    print(distance)
     return distance < max_distance
 
 '''token implementation
