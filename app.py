@@ -19,6 +19,9 @@ def index():  # put application's code here
     update_sun_times()
     return render_template('index.html')
 
+@app.route('/chatgpt')
+def chatgpt():
+    return render_template('chatgpt.html')
 
 def get_audio(audio_id):
     audio = ""
