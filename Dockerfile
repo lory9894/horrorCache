@@ -5,6 +5,7 @@ ADD app app
 WORKDIR app
 
 RUN pip install -r requirements.txt
+MKDIR /certs
 
 EXPOSE 8000
 
