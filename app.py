@@ -106,7 +106,8 @@ def update_sun_times():
 
 
 def check_coordinates(user_coord):
-    waypoints = [(40.95337 , 9.56702), (45.0806526, 7.5117741), (45.0806526, 7.5117741)]
+    waypoints = [(40.95337, 9.56702), (45.0806526, 7.5117741), (45.0806526, 7.5117741)]
+
 
     for i in range(len(waypoints)):
         if check_distance_audio(user_coord, waypoints[i]):
@@ -121,15 +122,13 @@ def check_coordinates(user_coord):
 
 
 def check_distance_audio(user_coord, wp_coord):
-    max_distance = 0.00005 # 5m
+    max_distance = 0.0001 # 10m
     distance = math.sqrt((user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2)
-    print(distance)
     return distance < max_distance
 
 def check_distance_coord(user_coord, wp_coord):
     max_distance = 0.001 #100m
     distance = math.sqrt((user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2)
-    print(distance)
     return distance < max_distance
 
 '''token implementation
@@ -141,4 +140,4 @@ def download_audio():
 
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000, ssl_context='adhoc')
+        app.run(host="0.0.0.0", port=5000, ssl_context=('/home/lorenzo/Workspaces/horrorCache/server.crt','/home/lorenzo/Workspaces/horrorCache/server.key'))

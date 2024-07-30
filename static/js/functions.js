@@ -5,7 +5,7 @@ const options = {
 };
 
 let targetCoordinates = { lat: 40.95337 , lon: 9.56702 }; // Target coordinates todo:esempio
-
+let positionHandler = 0
 
 window.onload = function() {
     let promises = [];
@@ -13,12 +13,15 @@ window.onload = function() {
         var alt_audio = document.getElementById('alt_audio');
         alt_audio.innerText = "ricerco trasmissioni"
         alt_audio.hidden = false;
-        let promises = [];
         promises.push(getPosition());
         Promise.all(promises).then(function(values) {
             sendCoord(values[0]);
         });
     });
+}
+
+function error(err) {
+  console.error(`ERROR(${err.code}): ${err.message}`);
 }
 
 function getPosition() {
@@ -29,6 +32,7 @@ function getPosition() {
 
 function sendCoord(position) {
     let positionData = position.coords;
+    console.log(positionData)
     $.ajax({
         url: '/location',
         type: 'GET',
@@ -56,9 +60,10 @@ function response(data) {
             alt_audio.innerText = "nessuna trasmissione trovata nelle vicinanze"
         } else if (data.error_message === 'generic'){
             alt_audio.innerText = "trasmissione individuata, avvicinarsi"
-            setInterval(updateSignalAndDirection, 5000);
-            updateSignalAndDirection()
             targetCoordinates = { lat: data.coords[0], lon: data.coords[1]}
+                    positionHandler = navigator.geolocation.watchPosition(function (position) {
+                updateSignalAndDirection(position)
+        }, error, options)
         }
     }
 }
@@ -97,13 +102,15 @@ function updateSignalAndDirection() {
             updateSignalStrength(distance);
             updateDirectionIndicator(angle);
 
-            /** todo: questo codice causa un loop, bisogna creare una funzione sendCoord con una response differente, che non triggeri il loop
-            let promises = [];
-            promises.push(getPosition());
-            Promise.all(promises).then(function(values) {
-                sendCoord(values[0]);
-            });
-                **/
+            if (distance <= 5) {
+                navigator.geolocation.clearWatch(positionHandler)
+                let promises = [];
+                promises.push(getPosition());
+                Promise.all(promises).then(function (values) {
+                    sendCoord(values[0]);
+                });
+            }
+            
 
     });
 
