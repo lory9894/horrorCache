@@ -1,6 +1,5 @@
 import base64
 import math
-import os
 from datetime import datetime
 from flask import Flask, request, render_template, session
 from flask_cors import CORS
@@ -20,9 +19,6 @@ def index():  # put application's code here
     update_sun_times()
     return render_template('index.html')
 
-@app.route('/chatgpt')
-def chatgpt():
-    return render_template('chatgpt.html')
 
 def get_audio(audio_id):
     audio = ""
@@ -108,28 +104,28 @@ def update_sun_times():
 def check_coordinates(user_coord):
     waypoints = [(40.95337, 9.56702), (45.0806526, 7.5117741), (45.0806526, 7.5117741)]
 
-
     for i in range(len(waypoints)):
         if check_distance_audio(user_coord, waypoints[i]):
-            return True, True, f"audio_{i+1}"
+            return True, True, f"audio_{i + 1}"
 
     for i in range(len(waypoints)):
         if check_distance_coord(user_coord, waypoints[i]):
             return False, True, waypoints[i]
 
-
     return False, False, "audio_error"
 
 
 def check_distance_audio(user_coord, wp_coord):
-    max_distance = 0.0001 # 10m
+    max_distance = 0.0001  # 10m
     distance = math.sqrt((user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2)
     return distance < max_distance
 
+
 def check_distance_coord(user_coord, wp_coord):
-    max_distance = 0.001 #100m
+    max_distance = 0.001  #100m
     distance = math.sqrt((user_coord[0] - wp_coord[0]) ** 2 + (user_coord[1] - wp_coord[1]) ** 2)
     return distance < max_distance
+
 
 '''token implementation
 @app.route('/audio/<audioID>', methods=['GET'])
@@ -138,6 +134,5 @@ def download_audio():
     print(f"Token: {token}")
 '''
 
-
 if __name__ == '__main__':
-        app.run(host="0.0.0.0", port=5000, ssl_context=('/home/lorenzo/Workspaces/horrorCache/server.crt','/home/lorenzo/Workspaces/horrorCache/server.key'))
+    app.run(host="0.0.0.0", port=5000, ssl_context=('./server.crt', './server.key'))

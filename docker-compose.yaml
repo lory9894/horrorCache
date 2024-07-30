@@ -1,0 +1,8 @@
+version: '3'
+services:
+  horrorCache:
+    container_name: horror_cache
+    build: .
+    image: horror_cache
+    ports:
+      - "80:8000"
