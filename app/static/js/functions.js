@@ -3,9 +3,15 @@ const options = {
   timeout: 60000,
   maximumAge: 0
 };
+const isIOS = (
+  navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
+  navigator.userAgent.match(/AppleWebKit/)
+);
+
 
 let targetCoordinates = { lat: 40.95337 , lon: 9.56702 }; // Target coordinates todo:esempio
 let positionHandler = 0
+let angle =0;
 
 window.onload = function() {
     let promises = [];
@@ -17,11 +23,39 @@ window.onload = function() {
         Promise.all(promises).then(function(values) {
             sendCoord(values[0]);
         });
+        startCompass()
+        // todo :debug per la bussola
+        updateSignalAndDirection();
+        setInterval(updateSignalAndDirection, 5000);
     });
 }
 
 function error(err) {
   console.error(`ERROR(${err.code}): ${err.message}`);
+}
+
+function startCompass() {
+  if (isIOS) {
+    DeviceOrientationEvent.requestPermission()
+      .then((response) => {
+        if (response === "granted") {
+          window.addEventListener("deviceorientation", compass_handler, true);
+        } else {
+          alert("has to be allowed!");
+        }
+      })
+      .catch(() => alert("not supported"));
+  } else {
+    window.addEventListener("deviceorientation", compass_handler, true);
+  }
+}
+
+function compass_handler(e) {
+  heading = e.webkitCompassHeading || Math.abs(e.alpha - 360);
+  const arrow = $('#arrow')[0];
+  const direction =angle-heading;
+  //console.log(`angle= ${angle}, heading= ${heading}, direction= ${direction}`)
+  arrow.style.transform = `rotate(${direction}deg)`;
 }
 
 function getPosition() {
@@ -61,9 +95,9 @@ function response(data) {
         } else if (data.error_message === 'generic'){
             alt_audio.innerText = "trasmissione individuata, avvicinarsi"
             targetCoordinates = { lat: data.coords[0], lon: data.coords[1]}
-                    positionHandler = navigator.geolocation.watchPosition(function (position) {
+            positionHandler = navigator.geolocation.watchPosition(function (position) {
                 updateSignalAndDirection(position)
-        }, error, options)
+        }, error, options);
         }
     }
 }
@@ -95,12 +129,8 @@ function updateSignalAndDirection() {
     promises.push(getPosition());
     Promise.all(promises).then(function(values) {
             const distance = calculateDistance({lat: values[0].coords.latitude, lon: values[0].coords.longitude }, targetCoordinates) * 100000;
-            const angle = calculateAngle({lat: values[0].coords.latitude, lon: values[0].coords.longitude}, targetCoordinates);
-            console.log(values[0].coords)
-            console.log(distance);
-
+            angle = calculateAngle({lat: values[0].coords.latitude, lon: values[0].coords.longitude}, targetCoordinates);
             updateSignalStrength(distance);
-            updateDirectionIndicator(angle);
 
             if (distance <= 5) {
                 navigator.geolocation.clearWatch(positionHandler)
@@ -145,9 +175,4 @@ function updateSignalStrength(distance) {
         }
         signalStrengthElement.appendChild(bar);
     }
-}
-
-function updateDirectionIndicator(angle) {
-    const arrow = document.getElementById('arrow');
-    arrow.style.transform = `rotate(${angle}deg)`;
 }
