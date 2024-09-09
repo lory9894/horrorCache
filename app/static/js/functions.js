@@ -3,6 +3,7 @@ const options = {
   timeout: 60000,
   maximumAge: 0
 };
+let intervalId = null;
 const isIOS = (
   navigator.userAgent.match(/(iPod|iPhone|iPad)/) &&
   navigator.userAgent.match(/AppleWebKit/)
@@ -10,7 +11,7 @@ const isIOS = (
 
 
 let targetCoordinates = { lat: 40.95337 , lon: 9.56702 }; // Target coordinates todo:esempio
-let positionHandler = 0
+let positionHandler = null
 let angle =0;
 
 window.onload = function() {
@@ -26,7 +27,10 @@ window.onload = function() {
         startCompass()
         // todo :debug per la bussola
         updateSignalAndDirection();
-        setInterval(updateSignalAndDirection, 5000);
+        if (intervalId != null) {
+            clearInterval(intervalId);
+        }
+        intervalId = setInterval(updateSignalAndDirection, 5000);
     });
 }
 
@@ -86,8 +90,12 @@ function response(data) {
         alt_audio.hidden = true;
         document.getElementById('audio').load();
         document.getElementById('audio').hidden = false;
+
     }
     else {
+        var audioElemet = document.getElementById('audio')
+        audioElemet.hidden = true;
+        alt_audio.hidden = false;
         if (data.error_message === 'time') {
             alt_audio.innerText = "non è ancora buio"
         } else if (data.error_message === 'location') {
@@ -95,6 +103,9 @@ function response(data) {
         } else if (data.error_message === 'generic'){
             alt_audio.innerText = "trasmissione individuata, avvicinarsi"
             targetCoordinates = { lat: data.coords[0], lon: data.coords[1]}
+            if (positionHandler != null) {
+                navigator.geolocation.clearWatch(positionHandler)
+            }
             positionHandler = navigator.geolocation.watchPosition(function (position) {
                 updateSignalAndDirection(position)
         }, error, options);
@@ -131,8 +142,9 @@ function updateSignalAndDirection() {
             const distance = calculateDistance({lat: values[0].coords.latitude, lon: values[0].coords.longitude }, targetCoordinates) * 100000;
             angle = calculateAngle({lat: values[0].coords.latitude, lon: values[0].coords.longitude}, targetCoordinates);
             updateSignalStrength(distance);
+            var audioElemet = document.getElementById('audio')
 
-            if (distance <= 5) {
+            if (distance <= 5 && audioElemet.hidden === true) { // 5 metri, solo se non è già in riproduzione
                 navigator.geolocation.clearWatch(positionHandler)
                 let promises = [];
                 promises.push(getPosition());
@@ -140,7 +152,7 @@ function updateSignalAndDirection() {
                     sendCoord(values[0]);
                 });
             }
-            
+
 
     });
 
