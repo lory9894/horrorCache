@@ -102,7 +102,7 @@ def update_sun_times():
 
 
 def check_coordinates(user_coord):
-    waypoints = [(40.95337, 9.56702), (45.0806526, 7.5117741), (45.0806526, 7.5117741)]
+    waypoints = [(45.06205276436494, 7.518346970281856), (45.060118547450585, 7.516601493525671), (45.06715441531784, 7.514455596042136)]
 
     for i in range(len(waypoints)):
         if check_distance_audio(user_coord, waypoints[i]):
